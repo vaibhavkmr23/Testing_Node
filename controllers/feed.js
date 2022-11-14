@@ -3,7 +3,7 @@ const path = require('path');
 
 const { validationResult } = require('express-validator/check');
 
-const io = require('../socket');
+// const io = require('../socket');
 const Post = require('../models/post');
 const User = require('../models/user');
 
@@ -61,13 +61,14 @@ exports.createPost = async (req, res, next) => {
         await post.save()
         const user = await User.findById(req.userId)
         user.posts.push(post);
-        await user.save();
+        const savedUser = await user.save();
         io.getIO().emit('posts', { action: 'create', post: { ...post._doc, creator: { _id: req.userId, name: user.name } } });
         res.status(201).json({
             message: 'Post Created Successfully!',
             post: post,
             creator: { _id: user._id, name: user.name }
         })
+        return savedUser;
     }
     catch (err) {
         if (!err.statusCode) {
